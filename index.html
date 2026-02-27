@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аудит блогу як бізнес-системи</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a12;
+    --card: #12121f;
+    --card2: #1a1a2e;
+    --accent: #4361ff;
+    --accent2: #ff3d6b;
+    --yellow: #ffd166;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --border: rgba(255,255,255,0.07);
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG noise + grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(67,97,255,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(255,61,107,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: rgba(67,97,255,0.15);
+    border: 1px solid rgba(67,97,255,0.4);
+    color: #7c9bff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 72px);
+    line-height: 0.95;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  h1 span { color: var(--yellow); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 400;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ─── PROGRESS ─── */
+  .progress-wrap {
+    margin-bottom: 32px;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* ─── QUESTION CARD ─── */
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+    animation: slideIn 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-number {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .q-text {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  .q-hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  /* ─── OPTIONS ─── */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+  }
+
+  .option:hover {
+    background: rgba(67,97,255,0.08);
+    border-color: rgba(67,97,255,0.3);
+    transform: translateX(4px);
+  }
+
+  .option.selected {
+    background: rgba(67,97,255,0.15);
+    border-color: rgba(67,97,255,0.6);
+  }
+
+  .option-letter {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .option.selected .option-letter {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .option-text {
+    font-size: 14px;
+    line-height: 1.5;
+    padding-top: 4px;
+  }
+
+  /* ─── NAV ─── */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .btn {
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-next {
+    background: linear-gradient(135deg, var(--accent), #6b4eff);
+    color: #fff;
+    flex: 1;
+    padding: 16px;
+    font-size: 15px;
+  }
+
+  .btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(67,97,255,0.35);
+  }
+
+  .btn-next:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ─── RESULT ─── */
+  .result {
+    display: none;
+    animation: slideIn 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .score-ring-wrap {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .score-ring {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 20px;
+    position: relative;
+  }
+
+  .score-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .score-ring-number {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .score-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    line-height: 1;
+    color: var(--yellow);
+  }
+
+  .score-max {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .result-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 6vw, 48px);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .result-sublabel {
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* breakdown */
+  .breakdown {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .breakdown-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .breakdown-item {
+    margin-bottom: 18px;
+  }
+
+  .breakdown-item:last-child { margin-bottom: 0; }
+
+  .breakdown-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .breakdown-name {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .breakdown-score {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .breakdown-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .breakdown-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1) 0.3s;
+    width: 0%;
+  }
+
+  .bad  { background: var(--accent2); }
+  .mid  { background: var(--yellow); }
+  .good { background: #06d6a0; }
+
+  /* problems */
+  .problems {
+    background: rgba(255,61,107,0.06);
+    border: 1px solid rgba(255,61,107,0.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .problems-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 14px;
+    letter-spacing: 0.5px;
+  }
+
+  .problem-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(232,232,240,0.8);
+  }
+
+  .problem-item::before {
+    content: '→';
+    color: var(--accent2);
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  /* CTA */
+  .cta-card {
+    background: linear-gradient(135deg, rgba(67,97,255,0.15), rgba(255,61,107,0.1));
+    border: 1px solid rgba(67,97,255,0.3);
+    border-radius: var(--radius);
+    padding: 36px;
+    text-align: center;
+  }
+
+  .cta-emoji { font-size: 40px; margin-bottom: 16px; display: block; }
+
+  .cta-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(24px, 5vw, 38px);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .cta-text {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 440px;
+    margin: 0 auto 28px;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent2), #ff6b35);
+    color: #fff;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    padding: 18px 40px;
+    border-radius: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .cta-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(255,61,107,0.4);
+  }
+
+  .cta-note {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .watermark {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 12px;
+    color: rgba(112,112,160,0.5);
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── CONTACT FORM ─── */
+  .contact-form {
+    display: block;
+    animation: slideIn 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .form-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+
+  .form-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .form-hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .field input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .field input:focus {
+    border-color: rgba(67,97,255,0.5);
+    background: rgba(67,97,255,0.05);
+  }
+
+  .field input::placeholder {
+    color: var(--muted);
+  }
+
+  .btn-start {
+    background: linear-gradient(135deg, var(--accent), #6b4eff);
+    color: #fff;
+    width: 100%;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(67,97,255,0.35);
+  }
+
+  .privacy {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+
+  @media (max-width: 480px) {
+    .question-card { padding: 24px 20px; }
+    .cta-card { padding: 28px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge">🔍 Безкоштовний аудит</div>
+    <h1>Блог як <span>бізнес</span>?<br>Чи хобі?</h1>
+    <p class="subtitle">Пройдіть 10 питань і дізнайтесь, чому ваш блог не приносить стільки, скільки міг би — і що з цим робити.</p>
+  </div>
+
+  <!-- CONTACT FORM -->
+  <div class="contact-form" id="contact-form">
+    <div class="form-card">
+      <div class="form-title">Перед початком — залиш контакти 👇</div>
+      <div class="form-hint">Щоб після тесту я могла зв'язатись і розібрати твій конкретний випадок</div>
+
+      <div class="field">
+        <label>Нік в Instagram</label>
+        <input type="text" id="input-instagram" placeholder="@твій_нік" autocomplete="off"/>
+      </div>
+      <div class="field">
+        <label>Телефон (WhatsApp / Telegram)</label>
+        <input type="tel" id="input-phone" placeholder="+38 0xx xxx xx xx" autocomplete="off"/>
+      </div>
+
+      <button class="btn-start" onclick="startQuiz()">Почати аудит →</button>
+      <div class="privacy">🔒 Дані захищені. Ніякого спаму — тільки корисна діагностика.</div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" style="display:none;">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="prog-label">Питання 1 з 10</span>
+        <span id="prog-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="question-card" id="question-card">
+      <div class="q-number" id="q-num">01 / 10</div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-hint" id="q-hint"></div>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div class="nav">
+      <button class="btn btn-next" id="btn-next" disabled onclick="nextQuestion()">Далі →</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result" id="result">
+    <div class="score-ring-wrap">
+      <div class="score-ring">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>
+          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#rg)" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="377" id="ring-circle" stroke-dashoffset="377"/>
+          <defs>
+            <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#4361ff"/>
+              <stop offset="100%" stop-color="#ff3d6b"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-ring-number">
+          <div class="score-big" id="score-display">0</div>
+          <div class="score-max">з 30</div>
+        </div>
+      </div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-sublabel" id="result-sublabel"></div>
+    </div>
+
+    <div class="breakdown">
+      <div class="breakdown-title">📊 Ваш розбір по блокам</div>
+      <div id="breakdown-items"></div>
+    </div>
+
+    <div class="problems" id="problems-block">
+      <div class="problems-title">⚡ Ваші головні проблеми прямо зараз:</div>
+      <div id="problems-list"></div>
+    </div>
+
+    <div class="cta-card">
+      <span class="cta-emoji">🔥</span>
+      <div class="cta-title">Хочете дізнатись,<br>як це виправити?</div>
+      <p class="cta-text">Запишіться на безкоштовну 20-хвилинну діагностику. Я особисто розберу ваш блог і скажу, що саме заважає продажам.</p>
+      <a href="https://instagram.com/hanna_pylieva" target="_blank" class="cta-btn">
+        Записатись на безкоштовну діагностику →
+      </a>
+      <p class="cta-note">Без "впарювання". Просто чесний розбір 🙂</p>
+    </div>
+  </div>
+
+  <div class="watermark">@hanna_pylieva • dataloves.academy</div>
+</div>
+
+<script>
+const WEBHOOK_URL = 'https://n8n-production-42bd.up.railway.app/webhook/blog-audit';
+
+let userInstagram = '';
+let userPhone = '';
+
+function startQuiz() {
+  const ig = document.getElementById('input-instagram').value.trim();
+  const ph = document.getElementById('input-phone').value.trim();
+
+  if (!ig || !ph) {
+    alert('Будь ласка, заповни обидва поля 🙏');
+    return;
+  }
+
+  userInstagram = ig.startsWith('@') ? ig : '@' + ig;
+  userPhone = ph;
+
+  document.getElementById('contact-form').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  render();
+}
+
+function sendToWebhook(data) {
+  fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(() => {}); // тихо ігноруємо помилки
+}
+
+
+  {
+    block: "Продукт",
+    text: "Чи є у вас чіткий опис: для кого ваш продукт, яку проблему він вирішує і чим відрізняється від конкурентів?",
+    hint: "Не «в голові», а прописаний — так, щоб можна було показати іншій людині",
+    options: [
+      { text: "Так, є чіткий опис, перевірений на реальних клієнтах", score: 3 },
+      { text: "Є щось, але розмито — я б не показала нікому", score: 1 },
+      { text: "Я знаю в голові, але не прописано", score: 0 },
+      { text: "Чесно? Поняття не маю, хто саме мій клієнт", score: 0 },
+    ]
+  },
+  {
+    block: "Продукт",
+    text: "Скільки людей купили у вас повторно або перейшли на наступний продукт?",
+    hint: "Повторні продажі — це показник якості продукту",
+    options: [
+      { text: "Більшість моїх клієнтів купують знову", score: 3 },
+      { text: "Є такі, але менше половини", score: 1 },
+      { text: "Одиниці, здебільшого нові клієнти", score: 0 },
+      { text: "Поки що не відстежую це", score: 0 },
+    ]
+  },
+  {
+    block: "Аудиторія",
+    text: "Коли ви востаннє спілкувались з вашим клієнтом — не продавали, а саме слухали його болі?",
+    hint: "CustDev, дзвінок, особисте опитування — будь-який живий контакт",
+    options: [
+      { text: "Я регулярно проводжу CustDev або глибинні інтерв'ю", score: 3 },
+      { text: "Рідко, але буває — більше інтуїція", score: 1 },
+      { text: "Читаю коменти і DM — цього достатньо, ні?", score: 0 },
+      { text: "Не робила ніколи", score: 0 },
+    ]
+  },
+  {
+    block: "Маркетинг",
+    text: "Як ви зазвичай запускаєте продажі?",
+    hint: "Будьте чесними з собою",
+    options: [
+      { text: "Є система: воронки, прогріви, план запуску", score: 3 },
+      { text: "Роблю прогрів у сторіс і відкриваю продаж", score: 1 },
+      { text: "Виходжу з пропозицією, коли потрібні гроші", score: 0 },
+      { text: "Просто пишу пост «я продаю» і чекаю", score: 0 },
+    ]
+  },
+  {
+    block: "Маркетинг",
+    text: "Скільки точок дотику має людина до вас ПЕРЕД першою покупкою?",
+    hint: "Середній клієнт потребує 5–10 контактів з вами до рішення",
+    options: [
+      { text: "Більше 7 — я свідомо будую шлях клієнта", score: 3 },
+      { text: "Десь 3–5 — прогрів, вебінар, продаж", score: 1 },
+      { text: "1–2, якщо пощастить", score: 0 },
+      { text: "Не думала про це взагалі", score: 0 },
+    ]
+  },
+  {
+    block: "Контент",
+    text: "Чи є у вас контент-стратегія з різними типами контенту (прогрівний, охопний, продуктовий, особистий)?",
+    hint: "Не просто «план постів», а розуміння навіщо кожен пост у системі",
+    options: [
+      { text: "Так, я знаю навіщо кожна одиниця контенту", score: 3 },
+      { text: "Приблизно розумію, але все на інтуїції", score: 1 },
+      { text: "Пишу те, що цікаво мені або що в голову прийшло", score: 0 },
+      { text: "Роблю контент, щоб «був» — без стратегії", score: 0 },
+    ]
+  },
+  {
+    block: "Контент",
+    text: "Чи є у вас хоча б одна автоматична воронка, яка залучає і прогріває клієнтів без вашої участі?",
+    hint: "Наприклад, лідмагніт + бот + мінікурс або автовебінар",
+    options: [
+      { text: "Так, є і вона приносить заявки постійно", score: 3 },
+      { text: "Щось є, але не налагоджено як треба", score: 1 },
+      { text: "Хотіла зробити, але руки не дійшли", score: 0 },
+      { text: "Що таке воронка? 😅", score: 0 },
+    ]
+  },
+  {
+    block: "Цифри",
+    text: "Чи знаєте ви свій CAC (вартість залучення одного клієнта) та LTV (скільки він приносить за весь час)?",
+    hint: "Без цих цифр неможливо масштабуватись прибутково",
+    options: [
+      { text: "Так, веду аналітику і знаю свої метрики", score: 3 },
+      { text: "Приблизно розумію, але не рахувала точно", score: 1 },
+      { text: "Я знаю скільки заробила, цього достатньо", score: 0 },
+      { text: "Ні, не думала про це", score: 0 },
+    ]
+  },
+  {
+    block: "Цифри",
+    text: "Яку частку місць на ваш курс/продукт займають ДО початку офіційних продажів?",
+    hint: "Це показник сили вашого прогріву і лояльності аудиторії",
+    options: [
+      { text: "50% і більше — є черга до відкриття", score: 3 },
+      { text: "Десь 20–30% — є ранні пташки", score: 1 },
+      { text: "Майже нікого — все на старті продажів", score: 0 },
+      { text: "Не відстежую, продаю коли відкриваю", score: 0 },
+    ]
+  },
+  {
+    block: "Вигорання",
+    text: "Як ви зараз відчуваєте себе щодо ведення блогу?",
+    hint: "Будьте чесними — це важливо",
+    options: [
+      { text: "Є система, є делегування — кайфую від процесу", score: 3 },
+      { text: "Справляюсь, але часто виснажена", score: 1 },
+      { text: "Роблю все сама, сил майже немає", score: 0 },
+      { text: "Вигоріла і майже не веду вже", score: 0 },
+    ]
+  },
+];
+
+const blockScores = { "Продукт": 0, "Аудиторія": 0, "Маркетинг": 0, "Контент": 0, "Цифри": 0, "Вигорання": 0 };
+const blockMax   = { "Продукт": 6, "Аудиторія": 3, "Маркетинг": 6, "Контент": 6, "Цифри": 6, "Вигорання": 3 };
+
+let current = 0;
+let selected = null;
+let answers = [];
+let totalScore = 0;
+
+function render() {
+  const q = questions[current];
+  document.getElementById('q-num').textContent = `${String(current+1).padStart(2,'0')} / 10`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-hint').textContent = q.hint;
+
+  const letters = ['А','Б','В','Г'];
+  const optWrap = document.getElementById('options');
+  optWrap.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span class="option-text">${opt.text}</span>`;
+    btn.onclick = () => selectOption(i, btn, opt.score);
+    optWrap.appendChild(btn);
+  });
+
+  const pct = Math.round((current / questions.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `Питання ${current+1} з ${questions.length}`;
+  document.getElementById('prog-pct').textContent = pct + '%';
+
+  document.getElementById('btn-next').disabled = true;
+  selected = null;
+
+  // re-animate
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  requestAnimationFrame(() => { card.style.animation = ''; });
+}
+
+function selectOption(idx, btn, score) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+  selected = { idx, score };
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQuestion() {
+  if (selected === null) return;
+
+  const q = questions[current];
+  blockScores[q.block] += selected.score;
+  totalScore += selected.score;
+  answers.push({ block: q.block, score: selected.score, maxScore: 3, text: q.options[selected.idx].text });
+
+  current++;
+  if (current < questions.length) {
+    render();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('result').style.display = 'block';
+
+  // Визначаємо категорію
+  let category;
+  if (totalScore <= 8) category = 'Блог як хобі';
+  else if (totalScore <= 17) category = 'Система ламається';
+  else if (totalScore <= 24) category = 'Росте але повільно';
+  else category = 'Майже система';
+
+  // Відправляємо в n8n
+  sendToWebhook({
+    instagram: userInstagram,
+    phone: userPhone,
+    score_total: totalScore,
+    score_product: blockScores["Продукт"],
+    score_audience: blockScores["Аудиторія"],
+    score_marketing: blockScores["Маркетинг"],
+    score_content: blockScores["Контент"],
+    score_numbers: blockScores["Цифри"],
+    score_burnout: blockScores["Вигорання"],
+    category: category,
+    ans_q1: answers[0]?.text || '',
+    ans_q2: answers[1]?.text || '',
+    ans_q3: answers[2]?.text || '',
+    ans_q4: answers[3]?.text || '',
+    ans_q5: answers[4]?.text || '',
+    ans_q6: answers[5]?.text || '',
+    ans_q7: answers[6]?.text || '',
+    ans_q8: answers[7]?.text || '',
+    ans_q9: answers[8]?.text || '',
+    ans_q10: answers[9]?.text || '',
+  });
+
+  // score ring animation
+  const maxScore = 30;
+  const pct = totalScore / maxScore;
+  const circumference = 377;
+  setTimeout(() => {
+    document.getElementById('ring-circle').style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)';
+    document.getElementById('ring-circle').style.strokeDashoffset = circumference - (circumference * pct);
+  }, 100);
+
+  // score counter
+  let n = 0;
+  const interval = setInterval(() => {
+    n = Math.min(n + 1, totalScore);
+    document.getElementById('score-display').textContent = n;
+    if (n >= totalScore) clearInterval(interval);
+  }, 60);
+
+  // label
+  let label, sublabel;
+  if (totalScore <= 8) {
+    label = '😬 БЛОГ ЯК ХОБІ';
+    sublabel = 'Ваш блог поки що існує сам по собі. Продажі — це щасливий випадок, а не система. Але це виправляється.';
+  } else if (totalScore <= 17) {
+    label = '⚠️ СИСТЕМА ЛАМАЄТЬСЯ';
+    sublabel = 'Щось є, але критичних прогалин забагато. Ви витрачаєте енергію, але не отримуєте з блогу те, що він міг би давати.';
+  } else if (totalScore <= 24) {
+    label = '📈 РОСТЕТЕ, АЛЕ ПОВІЛЬНО';
+    sublabel = 'Основа є, але є 2–3 зони, які гальмують ріст. Виправите їх — результат відчутно зміниться.';
+  } else {
+    label = '🔥 МАЙЖЕ СИСТЕМА';
+    sublabel = 'Ви близько! Але навіть один слабкий блок може коштувати тисяч доларів. Давайте знайдемо його.';
+  }
+
+  document.getElementById('result-label').textContent = label;
+  document.getElementById('result-sublabel').textContent = sublabel;
+
+  // breakdown
+  const bdWrap = document.getElementById('breakdown-items');
+  const blocks = ["Продукт", "Маркетинг", "Контент", "Цифри", "Аудиторія", "Вигорання"];
+  blocks.forEach(b => {
+    const s = blockScores[b];
+    const m = blockMax[b];
+    const pct = Math.round((s / m) * 100);
+    let cls = pct >= 67 ? 'good' : pct >= 34 ? 'mid' : 'bad';
+    let emoji = pct >= 67 ? '✅' : pct >= 34 ? '⚠️' : '🔴';
+    const el = document.createElement('div');
+    el.className = 'breakdown-item';
+    el.innerHTML = `
+      <div class="breakdown-meta">
+        <span class="breakdown-name">${emoji} ${b}</span>
+        <span class="breakdown-score" style="color:${cls==='bad'?'var(--accent2)':cls==='mid'?'var(--yellow)':'#06d6a0'}">${s}/${m}</span>
+      </div>
+      <div class="breakdown-bar">
+        <div class="breakdown-fill ${cls}" style="width:0%" data-w="${pct}%"></div>
+      </div>`;
+    bdWrap.appendChild(el);
+  });
+
+  setTimeout(() => {
+    document.querySelectorAll('.breakdown-fill').forEach(el => {
+      el.style.width = el.dataset.w;
+    });
+  }, 200);
+
+  // problems
+  const problems = [];
+  if (blockScores["Продукт"] <= 1) problems.push("Ваш продукт не має чіткого позиціонування — клієнти не розуміють, для кого він і що отримають");
+  if (blockScores["Аудиторія"] === 0) problems.push("Ви не знаєте справжніх болей клієнта — контент та продукт «мимо»");
+  if (blockScores["Маркетинг"] <= 2) problems.push("Немає системи продажів — результати залежать від настрою і хаотичних дій");
+  if (blockScores["Контент"] <= 2) problems.push("Контент не веде до продажів — люди читають, але не купують");
+  if (blockScores["Цифри"] === 0) problems.push("Ви не знаєте свої цифри — неможливо масштабуватись і не злитись в мінус");
+  if (blockScores["Вигорання"] === 0) problems.push("Вигорання вже тут — без делегування і системи це тільки погіршиться");
+
+  if (problems.length === 0) problems.push("Є точки росту — на діагностиці знайдемо де саме ви залишаєте гроші на столі");
+
+  const probWrap = document.getElementById('problems-list');
+  problems.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'problem-item';
+    el.textContent = p;
+    probWrap.appendChild(el);
+  });
+}
+
+// init відбувається після заповнення форми
+</script>
+</body>
+</html>
